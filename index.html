@@ -158,7 +158,7 @@
             // 🛠️ 수정된 부분 2: 데이터를 밀어넣을 때도 'supabaseClient'를 사용하도록 변경했습니다.
             try {
                 const { data, error } = await supabaseClient
-                    .from('issued_coupons')
+                    .from('bssmedihub')
                     .insert([
                         { coupon_id: item.id, partner_name: item.partner }
                     ]);
