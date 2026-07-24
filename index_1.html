@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>부산 서구 의료관광 파트너스 - 모바일 쿠폰북</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 🟢 Supabase 라이브러리 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body { font-family: 'Pretendard', sans-serif; }
+        .modal-animate {
+            animation: popUp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popUp {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 pb-12">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-md mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <span class="text-xs text-blue-400 font-semibold tracking-wider block">BUSAN SEO-GU</span>
+                <h1 class="text-lg font-bold">의료관광 파트너스 쿠폰북</h1>
+            </div>
+            <span class="bg-blue-600/30 text-blue-300 text-xs px-2.5 py-1 rounded-full border border-blue-500/30">VIP Pass</span>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 pt-6 space-y-6">
+        <!-- Welcome Banner -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg">
+            <h2 class="text-xl font-bold mb-1">환영합니다! 👋</h2>
+            <p class="text-sm opacity-90 leading-relaxed">
+                서구 파트너스 업체의 혜택을 자유롭게 이용하세요.<br>
+                원하시는 혜택의 <b>[쿠폰 받기]</b>를 누르면 현장 제시용 쿠폰이 즉시 발급됩니다.
+            </p>
+        </div>
+
+        <!-- Filter Buttons -->
+        <div class="flex gap-2 overflow-x-auto pb-1 text-sm no-scrollbar">
+            <button onclick="filterCategory('all')" class="filter-btn active bg-slate-800 text-white px-4 py-2 rounded-xl font-medium whitespace-nowrap shadow-sm">전체</button>
+            <button onclick="filterCategory('hotel')" class="filter-btn bg-white text-slate-600 px-4 py-2 rounded-xl font-medium whitespace-nowrap border shadow-sm">🏨 호텔</button>
+            <button onclick="filterCategory('wellness')" class="filter-btn bg-white text-slate-600 px-4 py-2 rounded-xl font-medium whitespace-nowrap border shadow-sm">♨️ 웰니스/기타</button>
+            <button onclick="filterCategory('food')" class="filter-btn bg-white text-slate-600 px-4 py-2 rounded-xl font-medium whitespace-nowrap border shadow-sm">🍽️ 음식/카페</button>
+        </div>
+
+        <!-- Coupon List -->
+        <div id="couponList" class="space-y-4"></div>
+    </main>
+
+    <!-- LARGE COUPON POPUP MODAL -->
+    <div id="couponModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl modal-animate border border-slate-100">
+            <div class="bg-blue-600 text-white p-5 text-center relative">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-white/80 hover:text-white text-xl font-bold p-1">✕</button>
+                <span class="inline-block bg-white/20 text-xs px-3 py-1 rounded-full mb-2 font-medium">현장 제시용 모바일 쿠폰</span>
+                <h3 id="modalCategory" class="text-sm font-medium opacity-90">파트너스 혜택</h3>
+            </div>
+            <div class="p-6 text-center space-y-5">
+                <div>
+                    <span class="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">PARTNER NAME</span>
+                    <h2 id="modalPartner" class="text-2xl font-black text-slate-900 leading-tight">업체명</h2>
+                </div>
+                <div class="bg-amber-50 border-2 border-dashed border-amber-400 rounded-2xl p-5 my-2">
+                    <span class="text-xs text-amber-700 font-semibold block mb-1">특별 할인 혜택</span>
+                    <div id="modalDiscount" class="text-2xl font-extrabold text-amber-600 break-keep">혜택 내용</div>
+                </div>
+                <div class="bg-slate-50 p-3.5 rounded-xl text-left border border-slate-200/60">
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        • 결제 전 매장 직원에게 이 화면을 보여주세요.<br>
+                        • 서구 의료관광 파트너스 이용객 전용 혜택입니다.<br>
+                        • 타 할인 쿠폰과 중복 사용이 불가할 수 있습니다.
+                    </p>
+                </div>
+                <div class="pt-2 space-y-4">
+                    <div class="text-[11px] text-slate-400 font-mono">
+                        COUPON ID: <span id="modalCode" class="font-bold text-slate-600">SG-2026-0001</span>
+                    </div>
+                    <button onclick="closeModal()" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold shadow-md hover:bg-slate-800 transition active:scale-95">
+                        확인 및 닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- JavaScript Logic -->
+    <script>
+        // 🟢 1. API 키 설정 (잘 복사해 주셨습니다!)
+        const supabaseUrl = 'https://mfaocazvyjyrrevsoigf.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1mYW9jYXp2eWp5cnJldnNvaWdmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NzA1MDEsImV4cCI6MjEwMDQ0NjUwMX0.roqUQrt3S41ecMMTf93N3NVXXYy0ORKnVH5gLjez08E';
+        
+        // 🛠️ 수정된 부분 1: 이름 충돌 방지를 위해 변수명을 'supabaseClient'로 변경했습니다.
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const coupons = [
+            { id: 'SG-2026-H01', category: 'hotel', categoryLabel: '🏨 호텔', partner: '윈덤그랜드부산', discount: '객실 10% 할인권', desc: '최고급 해변 뷰 객실 이용 시 10% 현장 할인' },
+            { id: 'SG-2026-W01', category: 'wellness', categoryLabel: '♨️ 웰니스', partner: '스파해수랑', discount: '사우나 + 찜질방 + 노천탕 10% 할인', desc: '바다 전망 노천탕 및 오션뷰 찜질방 할인' },
+            { id: 'SG-2026-F01', category: 'food', categoryLabel: '☕ 카페', partner: 'EL 16.52', discount: '음료 주문 시 시그니처 기념품 증정', desc: '송도 해상케이블카 뷰 카페 특별 혜택' },
+            { id: 'SG-2026-H02', category: 'hotel', categoryLabel: '🏨 호텔', partner: '페어필드 바이 메리어트 송도', discount: '숙박 객실 10% 할인', desc: '송도 해수욕장 정면 위치 호텔 할인' },
+            { id: 'SG-2026-F02', category: 'food', categoryLabel: '🍽️ 음식점', partner: '김형제고기의철학', discount: '메인 메뉴 주문 시 사이드 메뉴 서비스', desc: '프리미엄 숙성육 전문점 파트너스 혜택' }
+        ];
+
+        function renderCoupons(filter = 'all') {
+            const listContainer = document.getElementById('couponList');
+            listContainer.innerHTML = '';
+            const filteredCoupons = filter === 'all' ? coupons : coupons.filter(c => c.category === filter);
+
+            filteredCoupons.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between space-y-4 hover:shadow-md transition";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium">${item.categoryLabel}</span>
+                            <span class="text-[11px] text-slate-400 font-mono">${item.id}</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900">${item.partner}</h3>
+                        <p class="text-base font-extrabold text-blue-600 mt-1">${item.discount}</p>
+                        <p class="text-xs text-slate-500 mt-1">${item.desc}</p>
+                    </div>
+                    <button onclick="openModal('${item.id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition shadow-sm active:scale-95">
+                        쿠폰 받기 (혜택 보기)
+                    </button>
+                `;
+                listContainer.appendChild(card);
+            });
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-800', 'text-white', 'active');
+                btn.classList.add('bg-white', 'text-slate-600');
+            });
+            event.target.classList.remove('bg-white', 'text-slate-600');
+            event.target.classList.add('bg-slate-800', 'text-white', 'active');
+            renderCoupons(cat);
+        }
+
+        async function openModal(couponId) {
+            const item = coupons.find(c => c.id === couponId);
+            if (!item) return;
+
+            document.getElementById('modalCategory').innerText = item.categoryLabel + ' 혜택';
+            document.getElementById('modalPartner').innerText = item.partner;
+            document.getElementById('modalDiscount').innerText = item.discount;
+            document.getElementById('modalCode').innerText = item.id;
+            
+            document.getElementById('couponModal').classList.remove('hidden');
+
+            // 🛠️ 수정된 부분 2: 데이터를 밀어넣을 때도 'supabaseClient'를 사용하도록 변경했습니다.
+            try {
+                const { data, error } = await supabaseClient
+                    .from('issued_coupons')
+                    .insert([
+                        { coupon_id: item.id, partner_name: item.partner }
+                    ]);
+                
+                if (error) {
+                    console.error("데이터 저장 실패:", error.message);
+                } else {
+                    console.log(`[${item.partner}] 쿠폰 발급 내역이 DB에 저장되었습니다!`);
+                }
+            } catch (err) {
+                console.error("오류 발생:", err);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('couponModal').classList.add('hidden');
+        }
+
+        renderCoupons();
+    </script>
+</body>
+</html>
